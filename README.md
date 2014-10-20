@@ -17,11 +17,17 @@ file_column_names <- "./UCI_HAR_Dataset/features.txt"
 
 ############ FUNCTIONS #####################
 # This are the functions we will use to clean the data.
+
+# The first function will tke be used to subjstract the info
+# from the files with the subjects and the activities.
 get_other_files <- function(x){
         file <- read.table(x)
         file <- file[[1]]
         return(file)
 }
+
+# This function will convert the numeric code used for the activities
+# into a more understandable code
 convert_labels <- function(x){
         x <- sub("1", "WALKING", x)
         x <- sub("2", "WALKING_UPSTAIRS", x)
@@ -31,8 +37,11 @@ convert_labels <- function(x){
         x <- sub("6", "LAYING", x)
         return(x)
 }
+
 # The next function "moveme" is a function that I found in the internet
 # and I think it is useful, that is why I included in my script.
+# This function is used to move a column to the firts position of a 
+# data frme
 moveme <- function (invec, movecommand) {
         movecommand <- lapply(strsplit(strsplit(movecommand, ";")[[1]], 
                                        ",|\\s+"), function(x) x[x != ""])
@@ -65,6 +74,10 @@ moveme <- function (invec, movecommand) {
         }
         myVec
 }
+
+# This is the main function, this function subjstracts the information from
+# the data sets and gives us back a data frame that includes the activities and
+# subjects. This way the next steps will be easier
 get_the_set <- function(x){
         train_widths <- rep(16,561)
         set <- read.fwf(x, widths = train_widths, header = F, buffersize= 100)
@@ -93,6 +106,10 @@ get_the_set <- function(x){
         set <- set[moveme(names(set), "Dataset first")]
         return(set)
 }
+
+# Finaly, the next two functions will calculate the means for each variable.
+# Every function indicates in its name how the information will be summarized:
+# this is, by subject or activity
 get_averages_by_subject <- function(x){
         subjects <- c("Subject_1", "Subject_2", "Subject_3", "Subject_4", "Subject_5", "Subject_6", "Subject_7", 
                       "Subject_8", "Subject_9", "Subject_10", "Subject_11", "Subject_12", "Subject_13", "Subject_14", 
@@ -131,21 +148,26 @@ get_averages_by_activity <- function(x){
 
 
 ########### WORK ########################
-# Get the datasets with an appropriate activity name and descriptive variable
-# names
+# This is the part where the work actually take place using the functions.
+# First we get both data sets. Each observation include an appropiate activity name and
+# each variable a descriptive names.
 train_set <- get_the_set(file_train_set)
 test_set <- get_the_set(file_test_set)
 
-# Merge the databases keeping all their rows
+# Once we have the datasets, we simply merge the databases keeping all their rows
 merged_data <- rbind(test_set, train_set)
 
-# Extract only the measurements of the mean and standard deviation
+# This is the cleaning process that will only select those variables that contain
+# means or standard deviations.
 means_stds <- grep("mean|std|Activity|Subject|Dataset", 
                    names(merged_data), value = T)
 means_stds_data <- merged_data[ ,means_stds]
 
-# Second independent tidy data set with average of each variable for each
-# activity and each subject (ordering the means_stds_data)
+# From the previous dataset we will create first a data set that arrages the varaibles
+# according suject and contains only the average value for each variable. 
+# Afterwards we will create a second data set that arranges the variables according
+# activity and contains only the average values for each variable.
+# Finally the datasets are merged to create a tidy data set.
 averages_by_subject <- get_averages_by_subject(means_stds_data)
 averages_by_activity <- get_averages_by_activity(means_stds_data)
 merged_averages <- rbind(averages_by_activity, averages_by_subject)
